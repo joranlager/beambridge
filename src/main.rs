@@ -6,6 +6,8 @@
 mod lan;
 mod pair;
 mod store;
+#[cfg(windows)]
+mod wintun;
 
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};

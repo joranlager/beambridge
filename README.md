@@ -72,8 +72,10 @@ The machine with the lower id becomes `<net>.1` and dials; the other becomes `<n
 network adapter named `beambridge`: ping, file shares and any TCP/UDP port work. Choose a `--net` that does not
 overlap your real LAN. The link reconnects automatically.
 
-- **Windows:** put `wintun.dll` ([wintun.net](https://www.wintun.net)) next to `beambridge.exe`. Windows Firewall
-  treats new adapters as *Public* and blocks incoming traffic; allow it, for example (admin PowerShell):
+- **Windows:** run from an Administrator shell. Nothing else to install: the signed Wintun driver DLL
+  ([wintun.net](https://www.wintun.net), WireGuard LLC) is built into `beambridge.exe` and is written to
+  `%LOCALAPPDATA%\beambridge` on first use. Windows Firewall treats new adapters as *Public* and blocks incoming
+  traffic; allow it, for example (admin PowerShell):
   `Set-NetConnectionProfile -InterfaceAlias beambridge -NetworkCategory Private`
 - **Linux/macOS:** run with `sudo`.
 
@@ -105,6 +107,11 @@ pairing code. But they can see connection metadata: your IP address, the machine
 connect. The peer you tunnel to also learns your IP when a direct connection is made (relayed connections hide it).
 This tool gives you privacy of content and authenticated peers, not anonymity. Use Tor or a VPN on top if you need
 that.
+
+## Third-party code
+
+The Windows build embeds the unmodified Wintun DLLs from `vendor/wintun/`, redistributed under WireGuard LLC's
+[Prebuilt Binaries License](vendor/wintun/LICENSE.txt). Check that licence if you redistribute beambridge.
 
 ## Security notes
 

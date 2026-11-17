@@ -3,7 +3,7 @@
 //! both machines; the one with the lower id gets `<net>.1` and dials, the other gets
 //! `<net>.2` and accepts.
 //!
-//! Needs administrator/root rights. On Windows `wintun.dll` must sit next to the exe.
+//! Needs administrator/root rights. On Windows the Wintun driver DLL is embedded in the exe.
 
 use crate::{Endpoint, EndpointId};
 use anyhow::{Context, Result, bail};
@@ -33,19 +33,21 @@ pub async fn run(endpoint: Endpoint, peer: EndpointId, net: &str) -> Result<()> 
     let my_ip = Ipv4Addr::new(parts[0], parts[1], parts[2], host);
     let peer_ip = Ipv4Addr::new(parts[0], parts[1], parts[2], 3 - host);
 
-    let dev = DeviceBuilder::new()
-        .name("beambridge")
-        .mtu(MTU)
-        .ipv4(my_ip, 24, None)
-        .build_async()
-        .map_err(|e| {
-            let hint = if cfg!(windows) {
-                "Run as Administrator and put wintun.dll (from wintun.net) next to beambridge.exe."
-            } else {
-                "Run as root (or grant CAP_NET_ADMIN)."
-            };
-            anyhow::anyhow!("creating the network adapter failed: {e}. {hint}")
-        })?;
+    let builder = DeviceBuilder::new().name("beambridge").mtu(MTU).ipv4(my_ip, 24, None);
+    // Windows: the Wintun driver DLL is embedded in the exe; keep it locked while we run.
+    #[cfg(windows)]
+    let (builder, _wintun) = {
+        let w = crate::wintun::extract()?;
+        (builder.wintun_file(w.path.clone()), w)
+    };
+    let dev = builder.build_async().map_err(|e| {
+        let hint = if cfg!(windows) {
+            "Run as Administrator."
+        } else {
+            "Run as root (or grant CAP_NET_ADMIN)."
+        };
+        anyhow::anyhow!("creating the network adapter failed: {e}. {hint}")
+    })?;
     let dev = Arc::new(dev);
     println!("Virtual LAN up: this machine is {my_ip}; the peer will be {peer_ip}.");
     println!("Waiting for the peer to connect...");
