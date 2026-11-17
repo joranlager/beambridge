@@ -75,8 +75,16 @@ overlap your real LAN. The link reconnects automatically.
 - **Windows:** run from an Administrator shell. Nothing else to install: the signed Wintun driver DLL
   ([wintun.net](https://www.wintun.net), WireGuard LLC) is built into `beambridge.exe` and is written to
   `%LOCALAPPDATA%\beambridge` on first use. Windows Firewall treats new adapters as *Public* and blocks incoming
-  traffic; allow it, for example (admin PowerShell):
-  `Set-NetConnectionProfile -InterfaceAlias beambridge -NetworkCategory Private`
+  traffic (ping, file shares), so on **each machine, once**, allow the virtual LAN's addresses (admin PowerShell;
+  use your own prefix if you changed `--net`):
+
+  ```powershell
+  New-NetFirewallRule -DisplayName "beambridge LAN" -Direction Inbound -RemoteAddress 10.10.0.0/24 -Action Allow
+  ```
+
+  The adapter exists only while `lan` is running (Windows removes it when the process exits), so commands that
+  target the adapter by name, such as `Set-NetConnectionProfile -InterfaceAlias beambridge`, only work while `lan`
+  is up and may have to be repeated each run. The rule above is permanent and does not depend on the adapter.
 - **Linux/macOS:** run with `sudo`.
 
 ### Options
