@@ -98,6 +98,31 @@ overlap your real LAN. The link reconnects automatically.
 | `--from HOST:PORT` | `connect` | Local address to bind (default `127.0.0.1:2222`) |
 | `--net A.B.C` | `lan` | Network prefix (default `10.10.0`) |
 
+## Where things are stored
+
+beambridge keeps its data in a `beambridge` folder inside your OS config directory:
+
+| OS | Folder |
+|---|---|
+| Windows | `C:\Users\<you>\AppData\Roaming\beambridge` (`%APPDATA%\beambridge`) |
+| Linux | `~/.config/beambridge` |
+| macOS | `~/Library/Application Support/beambridge` |
+
+| File | Contents |
+|---|---|
+| `identity.key` | This machine's **private key** (64 hex characters, not encrypted) |
+| `peers.json` | The machines you have paired with |
+
+- Use `--dir <path>` or the `BEAMBRIDGE_DIR` environment variable to keep them somewhere else.
+- The key is created on first use. On Linux/macOS the file is readable only by you (mode 600); on Windows it relies
+  on your user profile's normal permissions.
+- Running as Administrator from your own account uses the same folder. Elevating with a *different* Windows account
+  uses that account's folder, so it has a different identity and no paired peers.
+- If the key leaks, anyone holding it can impersonate this machine to everyone who paired with it. To replace it,
+  delete `identity.key` (a new identity is created on the next run) and pair again; paired machines should
+  `beambridge unpair` the old identity.
+- On Windows the embedded Wintun DLL is extracted to `%LOCALAPPDATA%\beambridge` (not the folder above).
+
 ## Is it free? Is it anonymous?
 
 **Free:** yes, with nothing to sign up for. It relies on public infrastructure run by others on a best-effort basis:
@@ -126,7 +151,8 @@ The Windows build embeds the unmodified Wintun DLLs from `vendor/wintun/`, redis
 - Treat the pairing code like a password for the next minute or so: whoever enters it first becomes the paired
   peer. Share it over a channel you trust, and check that `pair` on your side reports success.
 - Pairing is mutual: after it, each machine may use the other's `listen` service and `lan` link.
-- `identity.key` is this machine's private key. Keep it private; anyone holding it can impersonate this machine.
+- `identity.key` is this machine's private key (see [Where things are stored](#where-things-are-stored)). Keep it
+  private; anyone holding it can impersonate this machine.
 - Bind `--from` to `127.0.0.1` unless you want other machines on your LAN to use the tunnel.
 
 ## Limitations
